@@ -1,0 +1,54 @@
+┌─────────────────────────────────────────────────────────────────┐
+│                         INÍCIO                                   │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  FASE 0: PREPARAÇÃO                                             │
+│  • Carregar participantes                                        │
+│  • Embaralhar com seed=42                                       │
+│  • Pré-calcular mapeamento de escolhas                          │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  FASE 1: ALOCAÇÃO DE COTAS                                      │
+│  Para prioridade = 1 to 6:                                      │
+│    Para cada GT:                                                │
+│      • Calcular cotas faltantes                                 │
+│      • Buscar candidatos que atendem às cotas                   │
+│      • Classificar por pontuação (10 pts segmento, 5 pts região)│
+│      • Alocar prioritariamente                                  │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  FASE 2: AMPLA CONCORRÊNCIA                                     │
+│  Para prioridade = 1 to 6:                                      │
+│    Para cada GT:                                                │
+│      • Calcular vagas restantes                                 │
+│      • Buscar candidatos disponíveis                            │
+│      • Embaralhar e alocar por sorteio                          │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  FASE 3: FALLBACK                                               │
+│  • Identificar pendentes                                        │
+│  • Alocar em GTs com vagas disponíveis                          │
+│  • Registrar fallbacks para auditoria                           │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  SAÍDAS                                                         │
+│  • Relatório de alocação                                        │
+│  • Arquivo CSV com resultados                                   │
+│  • Log de fallbacks                                             │
+│  • Lista de não alocados (se houver)                            │
+└─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                          FIM                                     │
+└─────────────────────────────────────────────────────────────────┘

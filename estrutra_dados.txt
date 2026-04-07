@@ -1,0 +1,21 @@
+REGISTRO_PARTICIPANTE = {
+    ID: inteiro,
+    Nome: texto,
+    UF: texto,
+    Região: texto,           // "Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"
+    Macrossegmento: texto,   // "Poder Público" ou "Sociedade Civil"
+    GT1: inteiro,            // Prioridade (1 a 6) para o GT1
+    GT2: inteiro,            // Prioridade (1 a 6) para o GT2
+    GT3: inteiro,            // Prioridade (1 a 6) para o GT3
+    GT4: inteiro,            // Prioridade (1 a 6) para o GT4
+    GT5: inteiro,            // Prioridade (1 a 6) para o GT5
+    GT6: inteiro             // Prioridade (1 a 6) para o GT6
+}
+
+CONSTANTES:
+    GTS = ["GT1", "GT2", "GT3", "GT4", "GT5", "GT6"]
+    REGIOES = ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"]
+    SEGMENTOS = ["Poder Público", "Sociedade Civil"]
+    LIMITE_VAGAS = 80
+    COTA_SEGMENTO = 20
+    COTA_REGIAO = 2

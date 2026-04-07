@@ -1,0 +1,35 @@
+FUNÇÃO Embaralhar(lista, semente = NULO):
+    // Fisher-Yates (Knuth) Shuffle
+    // Se semente for fornecida, inicializar gerador pseudoaleatório
+    
+    INÍCIO
+    SE semente NÃO É NULO:
+        InicializarGeradorAleatorio(semente)
+    
+    n = tamanho(lista)
+    PARA i DE n-1 ATÉ 1:
+        j = Aleatorio(0, i)   // número aleatório entre 0 e i
+        Trocar(lista[i], lista[j])
+    
+    RETORNAR lista
+    FIM
+
+
+FUNÇÃO ORDENAR_POR(lista, campo, decrescente = FALSO):
+    // Ordena a lista pelo campo especificado
+    INÍCIO
+    ORDENAR lista usando campo como chave
+    SE decrescente:
+        INVERTER lista
+    RETORNAR lista
+    FIM
+
+
+FUNÇÃO SOMA(lista):
+    // Retorna a soma de todos os elementos da lista
+    INÍCIO
+    total = 0
+    PARA cada valor em lista:
+        total = total + valor
+    RETORNAR total
+    FIM

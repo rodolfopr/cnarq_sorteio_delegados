@@ -1,0 +1,92 @@
+PROCEDIMENTO GerarRelatorio(alocados, participantes, log_fallback, nao_alocados):
+
+    INÍCIO
+    total_geral = 0
+    satisfacao = dicionario: 1->0, 2->0, 3->0, 4->0, 5->0, 6->0
+    falhas_cota = FALSO
+    
+    // ===== RELATÓRIO POR GT =====
+    IMPRIMIR "RELATÓRIO FINAL"
+    IMPRIMIR "=" * 70
+    
+    PARA cada gt em GTS:
+        ocupantes = alocados[gt]
+        total = tamanho(ocupantes)
+        total_geral = total_geral + total
+        
+        // Contagem por segmento
+        cont_seg = dicionario vazio
+        PARA cada seg em SEGMENTOS:
+            cont_seg[seg] = 0
+        
+        // Contagem por região
+        cont_reg = dicionario vazio
+        PARA cada reg em REGIOES:
+            cont_reg[reg] = 0
+        
+        PARA cada p em ocupantes:
+            cont_seg[p.Macrossegmento] = cont_seg[p.Macrossegmento] + 1
+            cont_reg[p.Regiao] = cont_reg[p.Regiao] + 1
+            prioridade = p[gt]
+            satisfacao[prioridade] = satisfacao[prioridade] + 1
+        
+        IMPRIMIR gt + ": " + total + "/" + LIMITE_VAGAS + " vagas ocupadas"
+        
+        IMPRIMIR "  Segmentos:"
+        PARA cada seg em SEGMENTOS:
+            status = "✓" SE cont_seg[seg] >= COTA_SEGMENTO SENÃO "⚠"
+            IMPRIMIR "    " + status + " " + seg + ": " + cont_seg[seg] + " (mínimo " + COTA_SEGMENTO + ")"
+            SE cont_seg[seg] < COTA_SEGMENTO:
+                falhas_cota = VERDADEIRO
+        
+        IMPRIMIR "  Regiões:"
+        PARA cada reg em REGIOES:
+            status = "✓" SE cont_reg[reg] >= COTA_REGIAO SENÃO "⚠"
+            IMPRIMIR "    " + status + " " + reg + ": " + cont_reg[reg] + " (mínimo " + COTA_REGIAO + ")"
+            SE cont_reg[reg] < COTA_REGIAO:
+                falhas_cota = VERDADEIRO
+    
+    // ===== VERIFICAÇÃO DE COTAS =====
+    IMPRIMIR "\n" + "=" * 70
+    IMPRIMIR "VERIFICAÇÃO DE COTAS POR GT"
+    IMPRIMIR "=" * 70
+    
+    SE NÃO falhas_cota:
+        IMPRIMIR "✓ Todas as cotas foram cumpridas em todos os GTs!"
+    SENÃO:
+        IMPRIMIR "⚠ ALERTA: Algumas cotas não foram cumpridas. Verifique o relatório acima."
+    
+    // ===== SATISFAÇÃO DOS PARTICIPANTES =====
+    IMPRIMIR "\n" + "=" * 70
+    IMPRIMIR "SATISFAÇÃO DOS PARTICIPANTES"
+    IMPRIMIR "=" * 70
+    
+    total_satisfacao = 0
+    PARA i DE 1 ATÉ 6:
+        total_satisfacao = total_satisfacao + satisfacao[i]
+    
+    PARA i DE 1 ATÉ 6:
+        SE total_satisfacao > 0:
+            percentual = (satisfacao[i] / total_satisfacao) * 100
+        SENÃO:
+            percentual = 0
+        IMPRIMIR i + "ª opção: " + satisfacao[i] + " participantes (" + percentual + "%)"
+    
+    SE total_satisfacao > 0:
+        media = 0
+        PARA i DE 1 ATÉ 6:
+            media = media + (i * satisfacao[i])
+        media = media / total_satisfacao
+        IMPRIMIR "\nSatisfação média: " + media + " (quanto menor, melhor)"
+    
+    // ===== RESUMO GERAL =====
+    IMPRIMIR "\n" + "=" * 70
+    IMPRIMIR "RESUMO GERAL"
+    IMPRIMIR "=" * 70
+    IMPRIMIR "TOTAL DE PESSOAS NA BASE: " + tamanho(participantes)
+    IMPRIMIR "TOTAL DE PESSOAS ALOCADAS: " + total_geral
+    IMPRIMIR "TOTAL DE VAGAS DISPONÍVEIS: " + (LIMITE_VAGAS * 6)
+    IMPRIMIR "PENDENTES (não alocados): " + tamanho(nao_alocados)
+    IMPRIMIR "FALLBACKS (alocados fora da prioridade): " + tamanho(log_fallback)
+    
+    FIM

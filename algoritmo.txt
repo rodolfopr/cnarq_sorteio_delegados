@@ -1,0 +1,191 @@
+ALGORITMO SorteioCNArqRevisado:
+
+ENTRADA: Lista de participantes (N registros)
+SAÍDA: Mapeamento de participantes para GTs
+
+INÍCIO
+
+    // =========================================
+    // FASE 0: PREPARAÇÃO
+    // =========================================
+    
+    // Pré-calcular mapeamento prioridade -> GT
+    PARA cada participante na lista:
+        CRIAR dicionario escolhas[prioridade] = GT correspondente
+    
+    // Embaralhar lista com semente fixa
+    lista_embaralhada = Embaralhar(participantes, semente=42)
+    
+    // Inicializar estruturas
+    alocados = dicionario vazio: GT -> lista vazia
+    ids_alocados = conjunto vazio
+    log_fallback = lista vazia
+    
+    // Inicializar contadores de cotas preenchidas por GT
+    cotas_preenchidas = dicionario vazio
+    
+    PARA cada gt em GTS:
+        cotas_preenchidas[gt] = dicionario vazio
+        cotas_preenchidas[gt]["Poder Público"] = 0
+        cotas_preenchidas[gt]["Sociedade Civil"] = 0
+        PARA cada regiao em REGIOES:
+            cotas_preenchidas[gt][regiao] = 0
+    
+    // =========================================
+    // FASE 1: ALOCAÇÃO DE COTAS (GARANTIA DE MÍNIMOS)
+    // =========================================
+    // Esta fase garante que cada GT atinja as cotas mínimas
+    // antes de qualquer alocação por ampla concorrência
+    
+    PARA prioridade DE 1 ATÉ 6:
+        
+        IMPRIMIR "Processando cotas - prioridade " + prioridade
+        
+        PARA cada gt em GTS:
+            
+            // Calcular quantas vagas de cota ainda faltam
+            falta_pub = MAXIMO(0, COTA_SEGMENTO - cotas_preenchidas[gt]["Poder Público"])
+            falta_soc = MAXIMO(0, COTA_SEGMENTO - cotas_preenchidas[gt]["Sociedade Civil"])
+            
+            falta_regioes = dicionario vazio
+            PARA cada regiao em REGIOES:
+                falta_regioes[regiao] = MAXIMO(0, COTA_REGIAO - cotas_preenchidas[gt][regiao])
+            
+            total_falta_cotas = falta_pub + falta_soc + SOMA(falta_regioes.values())
+            
+            SE total_falta_cotas == 0:
+                CONTINUE   // Este GT já atingiu todas as cotas
+            
+            // Buscar candidatos não alocados que escolheram este GT nesta prioridade
+            candidatos_disponiveis = []
+            PARA cada p em lista_embaralhada:
+                SE p.ID NÃO ESTÁ em ids_alocados E p[gt] == prioridade:
+                    candidatos_disponiveis.ADICIONAR(p)
+            
+            SE candidatos_disponiveis ESTÁ VAZIO:
+                CONTINUE
+            
+            // Classificar candidatos por utilidade para as cotas
+            // Quanto mais cotas atende, maior a pontuação
+            PARA cada p em candidatos_disponiveis:
+                pontos = 0
+                SE falta_pub > 0 E p.Macrossegmento == "Poder Público":
+                    pontos = pontos + 10
+                SE falta_soc > 0 E p.Macrossegmento == "Sociedade Civil":
+                    pontos = pontos + 10
+                SE falta_regioes[p.Região] > 0:
+                    pontos = pontos + 5
+                p.pontuacao_cota = pontos
+            
+            // Ordenar por pontuação (decrescente) e depois embaralhar para desempate
+            candidatos_disponiveis = ORDENAR_POR(candidatos_disponiveis, "pontuacao_cota", decrescente=True)
+            candidatos_disponiveis = Embaralhar(candidatos_disponiveis) // Para desempate
+            
+            // Selecionar candidatos para preencher as cotas
+            selecionados_cota = []
+            falta_pub_temp = falta_pub
+            falta_soc_temp = falta_soc
+            falta_regioes_temp = COPIA(falta_regioes)
+            
+            PARA cada p em candidatos_disponiveis:
+                SE tamanho(selecionados_cota) >= total_falta_cotas:
+                    INTERROMPER
+                
+                precisa_pub = (falta_pub_temp > 0 E p.Macrossegmento == "Poder Público")
+                precisa_soc = (falta_soc_temp > 0 E p.Macrossegmento == "Sociedade Civil")
+                precisa_regiao = (falta_regioes_temp[p.Região] > 0)
+                
+                SE precisa_pub OU precisa_soc OU precisa_regiao:
+                    selecionados_cota.ADICIONAR(p)
+                    SE precisa_pub:
+                        falta_pub_temp = falta_pub_temp - 1
+                    SE precisa_soc:
+                        falta_soc_temp = falta_soc_temp - 1
+                    SE precisa_regiao:
+                        falta_regioes_temp[p.Região] = falta_regioes_temp[p.Região] - 1
+            
+            // Alocar os selecionados
+            PARA cada p em selecionados_cota:
+                alocados[gt].ADICIONAR(p)
+                ids_alocados.ADICIONAR(p.ID)
+                cotas_preenchidas[gt][p.Macrossegmento] = cotas_preenchidas[gt][p.Macrossegmento] + 1
+                cotas_preenchidas[gt][p.Região] = cotas_preenchidas[gt][p.Região] + 1
+                IMPRIMIR gt + ": Cota alocada - " + p.Macrossegmento + " / " + p.Região + " (prioridade " + prioridade + ")"
+    
+    // =========================================
+    // FASE 2: AMPLA CONCORRÊNCIA (POR ORDEM DE PRIORIDADE)
+    // =========================================
+    // Após garantir as cotas, preenche as vagas restantes respeitando as preferências
+    
+    IMPRIMIR "\nProcessando ampla concorrência"
+    
+    PARA prioridade DE 1 ATÉ 6:
+        
+        IMPRIMIR "Ampla concorrência - prioridade " + prioridade
+        
+        PARA cada gt em GTS:
+            
+            SE tamanho(alocados[gt]) >= LIMITE_VAGAS:
+                CONTINUE
+            
+            vagas_restantes = LIMITE_VAGAS - tamanho(alocados[gt])
+            
+            // Buscar candidatos não alocados que escolheram este GT nesta prioridade
+            candidatos = []
+            PARA cada p em lista_embaralhada:
+                SE p.ID NÃO ESTÁ em ids_alocados E p[gt] == prioridade:
+                    candidatos.ADICIONAR(p)
+            
+            SE candidatos ESTÁ VAZIO:
+                CONTINUE
+            
+            // Embaralhar para sorteio justo
+            candidatos = Embaralhar(candidatos)
+            
+            // Alocar até preencher as vagas
+            selecionados = candidatos[0:vagas_restantes]  // Primeiros N elementos
+            
+            PARA cada p em selecionados:
+                alocados[gt].ADICIONAR(p)
+                ids_alocados.ADICIONAR(p.ID)
+            
+            IMPRIMIR gt + ": Alocados " + tamanho(selecionados) + " na ampla concorrência"
+    
+    // =========================================
+    // FASE 3: FALLBACK (ALOCAÇÃO RESIDUAL)
+    // =========================================
+    // Aloca participantes remanescentes em qualquer GT com vaga disponível
+    
+    pendentes_finais = []
+    PARA cada p em lista_embaralhada:
+        SE p.ID NÃO ESTÁ em ids_alocados:
+            pendentes_finais.ADICIONAR(p)
+    
+    IMPRIMIR "\n=== FASE FINAL (FALLBACK) ==="
+    IMPRIMIR "Pendentes: " + tamanho(pendentes_finais)
+    
+    PARA cada p em pendentes_finais:
+        alocado = FALSO
+        
+        PARA cada gt em GTS:
+            SE tamanho(alocados[gt]) < LIMITE_VAGAS:
+                alocados[gt].ADICIONAR(p)
+                ids_alocados.ADICIONAR(p.ID)
+                log_fallback.ADICIONAR({
+                    "ID": p.ID,
+                    "GT": gt,
+                    "UF": p.UF,
+                    "Regiao": p.Região,
+                    "Segmento": p.Macrossegmento
+                })
+                IMPRIMIR "Fallback: ID " + p.ID + " (" + p.UF + ") alocado em " + gt
+                alocado = VERDADEIRO
+                INTERROMPER
+        
+        SE NÃO alocado:
+            IMPRIMIR "⚠ ID " + p.ID + " NÃO conseguiu vaga em nenhum GT!"
+            Registrar p como "não alocado"
+    
+    RETORNAR alocados, log_fallback, pendentes_finais
+
+FIM
